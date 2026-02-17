@@ -1,13 +1,13 @@
 {
-  "name": "matchboxd",
-  "version": "1.0.0",
-  "description": "Seu Diário de Futebol estilo Letterboxd",
+  "name": "matchboxd-v2",
+  "version": "1.1.0",
+  "description": "Sistema de avaliação de Jogos",
   "main": "index.html",
   "scripts": {
     "start": "serve",
     "build": "echo 'No build step required'"
   },
   "dependencies": {
-    "serve": "^14.0.0"
+    "serve": "^14.2.0"
   }
 }
