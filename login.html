@@ -42,20 +42,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphYWp1Zmp4Zm9sZnN4Zmh6bG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyODU1NTksImV4cCI6MjA4Njg2MTU1OX0.VSstWgnnQDskU8yxGW3JtKiQUlj2LVyz6CsNSfcmoTE';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function checkUser() {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) {
-        window.location.href = 'login.html'; // Redireciona se não houver sessão
-        }
-        }
-        checkUser();
 
-        // 2. Adicionar função de Logout no seu Header (Opcional mas recomendado)
-        // No seu objeto methods do Vue, adicione:
-        async logout() {
-        await _supabase.auth.signOut();
-        window.location.href = 'login.html';
-        }
 
         createApp({
             data() {
