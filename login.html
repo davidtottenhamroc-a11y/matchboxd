@@ -8,41 +8,49 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #14181c; color: #9ab; font-family: 'Inter', sans-serif; }
+        body { background-color: #14181c; color: #9ab; font-family: sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        [v-cloak] { display: none; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
-    <div id="app" class="w-full max-w-md glass p-8 rounded-2xl shadow-2xl">
-        <h1 class="text-3xl font-black text-white text-center mb-8 italic">MATCH<span class="text-green-500">BOXD</span></h1>
+    <div id="app" v-cloak class="w-full max-w-md glass p-8 rounded-2xl shadow-2xl">
+        <h1 class="text-3xl font-black text-white text-center mb-8 italic uppercase tracking-tighter">
+            MATCH<span class="text-green-500">BOXD</span>
+        </h1>
         
         <div class="space-y-6">
             <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">E-mail</label>
-                <input v-model="email" type="email" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none">
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">E-mail</label>
+                <input v-model="email" type="email" placeholder="seu@email.com"
+                       class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none transition-all">
             </div>
             <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Senha</label>
-                <input v-model="password" type="password" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none">
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Senha</label>
+                <input v-model="password" type="password" placeholder="••••••••"
+                       class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none transition-all">
             </div>
 
-            <button @click="handleAuth" :disabled="loading" class="w-full bg-green-600 hover:bg-green-500 text-black font-black py-4 rounded-xl uppercase tracking-widest transition-all">
-                {{ isLogin ? 'Entrar' : 'Cadastrar' }}
+            <button @click="handleAuth" :disabled="loading" 
+                    class="w-full bg-green-600 hover:bg-green-500 text-[#14181c] font-black py-4 rounded-xl uppercase tracking-widest transition-all disabled:opacity-50">
+                {{ loading ? 'Processando...' : (isLogin ? 'Entrar' : 'Criar Conta') }}
             </button>
 
-            <p class="text-center text-sm cursor-pointer hover:text-white" @click="isLogin = !isLogin">
-                {{ isLogin ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Faça Login' }}
+            <p class="text-center text-xs text-gray-500">
+                {{ isLogin ? 'Ainda não tem conta?' : 'Já possui uma conta?' }}
+                <span class="text-green-500 cursor-pointer font-bold hover:underline ml-1" @click="isLogin = !isLogin">
+                    {{ isLogin ? 'Cadastre-se' : 'Faça Login' }}
+                </span>
             </p>
         </div>
     </div>
 
     <script>
         const { createApp } = Vue;
+        // CREDENCIAIS DO SEU PROJETO
         const SUPABASE_URL = 'https://zaajufjxfolfsxfhzloe.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphYWp1Zmp4Zm9sZnN4Zmh6bG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyODU1NTksImV4cCI6MjA4Njg2MTU1OX0.VSstWgnnQDskU8yxGW3JtKiQUlj2LVyz6CsNSfcmoTE';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-
 
         createApp({
             data() {
@@ -50,6 +58,7 @@
             },
             methods: {
                 async handleAuth() {
+                    if (!this.email || !this.password) return alert("Preencha todos os campos!");
                     this.loading = true;
                     try {
                         let result;
@@ -57,13 +66,16 @@
                             result = await _supabase.auth.signInWithPassword({ email: this.email, password: this.password });
                         } else {
                             result = await _supabase.auth.signUp({ email: this.email, password: this.password });
-                            if (!result.error) alert("Verifique seu e-mail para confirmar o cadastro!");
+                            if (!result.error) alert("Cadastro realizado! Verifique sua caixa de e-mail.");
                         }
 
                         if (result.error) throw result.error;
-                        if (this.isLogin) window.location.href = 'index.html';
-                    } catch (e) { alert(e.message); }
-                    this.loading = false;
+                        if (this.isLogin && result.data.user) window.location.href = '/';
+                    } catch (e) { 
+                        alert("Erro: " + e.message); 
+                    } finally {
+                        this.loading = false;
+                    }
                 }
             }
         }).mount('#app')
