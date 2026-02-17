@@ -8,46 +8,59 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #14181c; color: #9ab; font-family: sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        /* Fundo gradiente para evitar tela preta estática */
+        body { 
+            background: radial-gradient(circle at top right, #1d232a, #14181c); 
+            color: #9ab; 
+            font-family: 'Inter', sans-serif; 
+        }
+        .glass { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255,255,255,0.08); 
+        }
         [v-cloak] { display: none; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
-    <div id="app" v-cloak class="w-full max-w-md glass p-8 rounded-2xl shadow-2xl">
-        <h1 class="text-3xl font-black text-white text-center mb-8 italic uppercase tracking-tighter">
-            MATCH<span class="text-green-500">BOXD</span>
-        </h1>
+    <div id="app" v-cloak class="w-full max-w-md glass p-10 rounded-3xl shadow-2xl border border-white/5">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black text-white italic tracking-tighter italic uppercase">
+                MATCH<span class="text-green-500">BOXD</span>
+            </h1>
+            <p class="text-xs uppercase tracking-[3px] text-gray-500 mt-2 font-bold">Football Diary</p>
+        </div>
         
-        <div class="space-y-6">
+        <div class="space-y-5">
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">E-mail</label>
-                <input v-model="email" type="email" placeholder="seu@email.com"
-                       class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none transition-all">
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 ml-1">E-mail</label>
+                <input v-model="email" type="email" placeholder="nome@exemplo.com"
+                       class="w-full bg-[#0d1117] border border-gray-800 rounded-xl p-4 text-white focus:border-green-500 outline-none transition-all placeholder:text-gray-700">
             </div>
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Senha</label>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 ml-1">Senha</label>
                 <input v-model="password" type="password" placeholder="••••••••"
-                       class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none transition-all">
+                       class="w-full bg-[#0d1117] border border-gray-800 rounded-xl p-4 text-white focus:border-green-500 outline-none transition-all placeholder:text-gray-700">
             </div>
 
             <button @click="handleAuth" :disabled="loading" 
-                    class="w-full bg-green-600 hover:bg-green-500 text-[#14181c] font-black py-4 rounded-xl uppercase tracking-widest transition-all disabled:opacity-50">
-                {{ loading ? 'Processando...' : (isLogin ? 'Entrar' : 'Criar Conta') }}
+                    class="w-full bg-green-600 hover:bg-[#00e054] text-[#14181c] font-extrabold py-4 rounded-xl uppercase tracking-[2px] transition-all shadow-lg shadow-green-500/10 disabled:opacity-50 mt-4">
+                {{ loading ? 'Carregando...' : (isLogin ? 'Entrar' : 'Criar minha conta') }}
             </button>
 
-            <p class="text-center text-xs text-gray-500">
-                {{ isLogin ? 'Ainda não tem conta?' : 'Já possui uma conta?' }}
-                <span class="text-green-500 cursor-pointer font-bold hover:underline ml-1" @click="isLogin = !isLogin">
-                    {{ isLogin ? 'Cadastre-se' : 'Faça Login' }}
-                </span>
-            </p>
+            <div class="pt-6 border-t border-gray-800 mt-6 text-center">
+                <p class="text-xs text-gray-500">
+                    {{ isLogin ? 'Novo por aqui?' : 'Já possui conta?' }}
+                    <button class="text-green-500 font-bold hover:text-green-400 ml-1 transition-colors" @click="isLogin = !isLogin">
+                        {{ isLogin ? 'Cadastre-se grátis' : 'Fazer Login' }}
+                    </button>
+                </p>
+            </div>
         </div>
     </div>
 
     <script>
         const { createApp } = Vue;
-        // CREDENCIAIS DO SEU PROJETO
         const SUPABASE_URL = 'https://zaajufjxfolfsxfhzloe.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphYWp1Zmp4Zm9sZnN4Zmh6bG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyODU1NTksImV4cCI6MjA4Njg2MTU1OX0.VSstWgnnQDskU8yxGW3JtKiQUlj2LVyz6CsNSfcmoTE';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -58,7 +71,7 @@
             },
             methods: {
                 async handleAuth() {
-                    if (!this.email || !this.password) return alert("Preencha todos os campos!");
+                    if (!this.email || !this.password) return alert("Preencha os campos!");
                     this.loading = true;
                     try {
                         let result;
@@ -66,7 +79,7 @@
                             result = await _supabase.auth.signInWithPassword({ email: this.email, password: this.password });
                         } else {
                             result = await _supabase.auth.signUp({ email: this.email, password: this.password });
-                            if (!result.error) alert("Cadastro realizado! Verifique sua caixa de e-mail.");
+                            if (!result.error) alert("Quase lá! Verifique seu e-mail para confirmar.");
                         }
 
                         if (result.error) throw result.error;
