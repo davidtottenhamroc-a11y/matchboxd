@@ -83,7 +83,7 @@
                         }
 
                         if (result.error) throw result.error;
-                        if (this.isLogin && result.data.user) window.location.href = '/';
+                        if (this.isLogin && result.data.user) window.location.href = '/index.html';
                     } catch (e) { 
                         alert("Erro: " + e.message); 
                     } finally {
