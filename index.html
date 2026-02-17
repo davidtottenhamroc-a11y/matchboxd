@@ -167,6 +167,21 @@
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
+        async function checkUser() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+        window.location.href = 'login.html'; // Redireciona se não houver sessão
+        }
+        }
+        checkUser();
+
+        // 2. Adicionar função de Logout no seu Header (Opcional mas recomendado)
+        // No seu objeto methods do Vue, adicione:
+        async logout() {
+        await _supabase.auth.signOut();
+        window.location.href = 'login.html';
+        }
+
         createApp({
             data() {
                 return {
@@ -290,4 +305,5 @@
         }).mount('#app')
     </script>
 </body>
+
 </html>
