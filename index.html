@@ -39,9 +39,14 @@
                     <i class="fas fa-search absolute right-4 top-3 text-gray-500"></i>
                 </div>
                 
-                <button @click="toggleAdmin" :class="isAdmin ? 'text-green-500' : 'text-gray-500'" class="hover:text-green-400 transition-all text-xl">
-                    <i :class="isAdmin ? 'fas fa-unlock' : 'fas fa-lock'"></i>
-                </button>
+                <div class="flex items-center gap-4">
+                    <button @click="toggleAdmin" :class="isAdmin ? 'text-green-500' : 'text-gray-500'" class="hover:text-green-400 transition-all text-xl">
+                        <i :class="isAdmin ? 'fas fa-unlock' : 'fas fa-lock'"></i>
+                    </button>
+                    <button @click="handleLogout" title="Sair do sistema" class="text-gray-500 hover:text-red-500 transition-all text-xl">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -50,7 +55,7 @@
             <section v-if="isAdmin" class="mb-12 p-6 glass rounded-xl border-green-500/30 animate-pulse bg-green-500/5">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-green-500 font-bold text-xs uppercase tracking-[2px] italic">Painel do Administrador</h2>
-                    <button @click="isAdmin = false" class="text-[10px] text-red-500 uppercase font-bold hover:underline">Encerrar Sessão</button>
+                    <button @click="isAdmin = false" class="text-[10px] text-red-500 uppercase font-bold hover:underline">Fechar Painel</button>
                 </div>
                 <div class="flex flex-wrap gap-4">
                     <button @click="importFromAPI" class="bg-green-600 hover:bg-green-500 text-black px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-green-500/20">
@@ -129,7 +134,7 @@
                 <div class="p-8">
                     <div class="flex justify-between items-start mb-8 border-b border-gray-800 pb-4">
                         <div>
-                            <h2 class="text-white text-2xl font-black italic uppercase tracking-tighter italic">LOG MATCH</h2>
+                            <h2 class="text-white text-2xl font-black italic uppercase tracking-tighter">LOG MATCH</h2>
                             <p class="text-sm text-green-500 font-bold tracking-widest uppercase">{{ selectedMatch.home_team }} vs {{ selectedMatch.away_team }}</p>
                         </div>
                         <button @click="showModal = false" class="text-gray-500 hover:text-white text-3xl">&times;</button>
@@ -161,33 +166,16 @@
         // CREDENCIAIS SUPABASE
         const SUPABASE_URL = 'https://zaajufjxfolfsxfhzloe.supabase.co'
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphYWp1Zmp4Zm9sZnN4Zmh6bG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyODU1NTksImV4cCI6MjA4Njg2MTU1OX0.VSstWgnnQDskU8yxGW3JtKiQUlj2LVyz6CsNSfcmoTE'
-        
-        // CREDENCIAL RAPIDAPI
         const RAPID_API_KEY = '4003137c16msh1bb87edc751c971p1c2dc1jsnd4f38903d6e2'
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-
-        async function checkUser() {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) {
-        window.location.href = 'login.html'; // Redireciona se não houver sessão
-        }
-        }
-        checkUser();
-
-        // 2. Adicionar função de Logout no seu Header (Opcional mas recomendado)
-        // No seu objeto methods do Vue, adicione:
-        async logout() {
-        await _supabase.auth.signOut();
-        window.location.href = 'login.html';
-        }
 
         createApp({
             data() {
                 return {
                     loading: true,
                     isSaving: false,
-                    isAdmin: false, // Controle do painel administrativo
+                    isAdmin: false,
                     searchQuery: '',
                     currentFilter: 'Todos',
                     showModal: false,
@@ -213,14 +201,26 @@
                 }
             },
             methods: {
-                // MÉTODO DE SEGURANÇA: Alterna o modo admin via senha
+                // MÉTODO DE PROTEÇÃO: Roda antes do Vue carregar os dados
+                async checkUserSession() {
+                    const { data: { session } } = await _supabase.auth.getSession();
+                    if (!session) {
+                        window.location.href = '/login'; // Redireciona via vercel route
+                    } else {
+                        this.loadData(); // Só carrega os dados se estiver logado
+                    }
+                },
+                async handleLogout() {
+                    await _supabase.auth.signOut();
+                    window.location.href = '/login';
+                },
                 toggleAdmin() {
                     if (this.isAdmin) {
                         this.isAdmin = false;
                         return;
                     }
                     const pass = prompt("Para gerenciar o banco de dados, digite a senha mestre:");
-                    if (pass === "FUTEBOL2026") { // DEFINA SUA SENHA AQUI
+                    if (pass === "FUTEBOL2026") {
                         this.isAdmin = true;
                     } else {
                         alert("Senha administrativa incorreta!");
@@ -243,7 +243,7 @@
                     this.tempReview = '';
                 },
                 async saveEntry() {
-                    if(this.tempRating === 0) return alert("Por favor, selecione uma nota de 1 a 5 estrelas.");
+                    if(this.tempRating === 0) return alert("Por favor, selecione uma nota.");
                     this.isSaving = true
                     try {
                         const { error } = await _supabase.from('reviews').insert([{
@@ -260,50 +260,36 @@
                 },
                 async importFromAPI() {
                     if (!this.isAdmin) return;
-                    
                     this.loading = true;
                     const leagueId = prompt("ID da Liga (71: BR, 2: Champions, 1: Copa):", "71");
                     const season = prompt("Ano da Temporada:", "2024");
-
                     try {
                         const resp = await fetch(`https://api-football-v1.p.rapidapi.com/v3/fixtures?league=${leagueId}&season=${season}`, {
-                            headers: { 
-                                'X-RapidAPI-Key': RAPID_API_KEY, 
-                                'X-RapidAPI-Host': 'api-football-v1.p.rapidapi.com' 
-                            }
+                            headers: { 'X-RapidAPI-Key': RAPID_API_KEY, 'X-RapidAPI-Host': 'api-football-v1.p.rapidapi.com' }
                         });
                         const json = await resp.json();
-                        
-                        if(!json.response || json.response.length === 0) throw new Error("A API não retornou jogos para esta liga/ano.");
-
-                        const formatted = json.response
-                            .filter(p => p.fixture.status.short === 'FT')
-                            .slice(0, 15)
-                            .map(p => ({
-                                home_team: p.teams.home.name,
-                                away_team: p.teams.away.name,
-                                score: `${p.goals.home}-${p.goals.away}`,
-                                year: parseInt(season),
-                                competition: leagueId == 71 ? 'Brasileirão' : (leagueId == 2 ? 'Champions League' : 'Copa do Mundo'),
-                                poster_url: p.teams.home.logo,
-                                goals: (p.goals.home || 0) + (p.goals.away || 0)
-                            }));
-
-                        const { error } = await _supabase.from('matches').insert(formatted);
-                        if(error) throw error;
-
-                        alert("Dados sincronizados com o Supabase!");
+                        if(!json.response || json.response.length === 0) throw new Error("API retornou vazio.");
+                        const formatted = json.response.filter(p => p.fixture.status.short === 'FT').slice(0, 15).map(p => ({
+                            home_team: p.teams.home.name,
+                            away_team: p.teams.away.name,
+                            score: `${p.goals.home}-${p.goals.away}`,
+                            year: parseInt(season),
+                            competition: leagueId == 71 ? 'Brasileirão' : (leagueId == 2 ? 'Champions League' : 'Copa do Mundo'),
+                            poster_url: p.teams.home.logo,
+                            goals: (p.goals.home || 0) + (p.goals.away || 0)
+                        }));
+                        await _supabase.from('matches').insert(formatted);
                         this.loadData();
-                    } catch (e) { 
-                        alert("Erro de Sincronização: " + e.message); 
-                    }
+                        alert("Sincronização concluída!");
+                    } catch (e) { alert(e.message); }
                     this.loading = false;
                 },
                 formatDate(dateStr) { return new Date(dateStr).toLocaleDateString('pt-BR') }
             },
-            mounted() { this.loadData() }
+            mounted() {
+                this.checkUserSession(); // Inicia verificando o login
+            }
         }).mount('#app')
     </script>
 </body>
-
 </html>
