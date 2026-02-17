@@ -1,8 +1,7 @@
 {
   "version": 2,
-  "name": "matchboxd",
+  "cleanUrls": true,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "cleanUrls": true
+  ]
 }
